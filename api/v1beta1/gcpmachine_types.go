@@ -216,6 +216,12 @@ type CustomerEncryptionKey struct {
 	// +optional
 	SuppliedKey *SuppliedKey `json:"suppliedKey,omitempty"`
 }
+type ProvisioningModel string
+
+const (
+	ProvisioningModelStandard ProvisioningModel = "Standard"
+	ProvisioningModelSpot     ProvisioningModel = "Spot"
+)
 
 // GCPMachineSpec defines the desired state of GCPMachine.
 type GCPMachineSpec struct {
@@ -301,6 +307,13 @@ type GCPMachineSpec struct {
 	// Preemptible defines if instance is preemptible
 	// +optional
 	Preemptible bool `json:"preemptible,omitempty"`
+
+	// ProvisioningModel defines if instance is spot.
+	// If set to "Standard" while preemptible is true, then the VM will be of type "Preemptible".
+	// If "Spot", VM type is "Spot". When unspecified, defaults to "Standard".
+	// +kubebuilder:validation:Enum=Standard;Spot
+	// +optional
+	ProvisioningModel *ProvisioningModel `json:"provisioningModel,omitempty"`
 
 	// IPForwarding Allows this instance to send and receive packets with non-matching destination or source IPs.
 	// This is required if you plan to use this instance to forward routes. Defaults to enabled.
