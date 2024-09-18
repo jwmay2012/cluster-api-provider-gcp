@@ -341,7 +341,21 @@ func (m *MachineScope) InstanceNetworkInterfaceSpec() *compute.NetworkInterface 
 		networkInterface.Subnetwork = path.Join("projects", m.ClusterGetter.NetworkProject(), "regions", m.ClusterGetter.Region(), "subnetworks", *m.GCPMachine.Spec.Subnet)
 	}
 
+	networkInterface.AliasIpRanges = m.InstanceNetworkInterfaceAliasIpRangesSpec()
+
 	return networkInterface
+}
+
+func (m *MachineScope) InstanceNetworkInterfaceAliasIpRangesSpec() []*compute.AliasIpRange {
+	aliasIpRanges := make([]*compute.AliasIpRange, 0, len(m.GCPMachine.Spec.AliasIpRanges))
+	for _, alias := range m.GCPMachine.Spec.AliasIpRanges {
+		aliasIpRange := &compute.AliasIpRange{
+			IpCidrRange:         alias.IpCidrRange,
+			SubnetworkRangeName: alias.SubnetworkRangeName,
+		}
+		aliasIpRanges = append(aliasIpRanges, aliasIpRange)
+	}
+	return aliasIpRanges
 }
 
 // InstanceServiceAccountsSpec returns service-account spec.
