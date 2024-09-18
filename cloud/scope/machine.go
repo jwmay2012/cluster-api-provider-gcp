@@ -402,6 +402,9 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 			Preemptible: m.GCPMachine.Spec.Preemptible,
 		},
 	}
+	if m.GCPMachine.Spec.ProvisioningModel != nil && *m.GCPMachine.Spec.ProvisioningModel == infrav1.ProvisioningModelSpot {
+		instance.Scheduling.ProvisioningModel = "SPOT"
+	}
 
 	instance.CanIpForward = true
 	if m.GCPMachine.Spec.IPForwarding != nil && *m.GCPMachine.Spec.IPForwarding == infrav1.IPForwardingDisabled {
