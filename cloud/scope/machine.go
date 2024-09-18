@@ -338,7 +338,16 @@ func (m *MachineScope) InstanceNetworkInterfaceSpec() *compute.NetworkInterface 
 	}
 
 	if m.GCPMachine.Spec.Subnet != nil {
-		networkInterface.Subnetwork = path.Join("projects", m.ClusterGetter.NetworkProject(), "regions", m.ClusterGetter.Region(), "subnetworks", *m.GCPMachine.Spec.Subnet)
+		kludgeSubnetSplit := strings.Split(*m.GCPMachine.Spec.Subnet, ",")
+		networkInterface.Subnetwork = path.Join("projects", m.ClusterGetter.NetworkProject(), "regions", m.ClusterGetter.Region(), "subnetworks", kludgeSubnetSplit[0])
+		if len(kludgeSubnetSplit) >= 3 {
+			networkInterface.AliasIpRanges = []*compute.AliasIpRange{
+				{
+					IpCidrRange:         kludgeSubnetSplit[2],
+					SubnetworkRangeName: kludgeSubnetSplit[1],
+				},
+			}
+		}
 	}
 
 	networkInterface.AliasIpRanges = m.InstanceNetworkInterfaceAliasIpRangesSpec()
