@@ -439,6 +439,14 @@ spec:
                           Subnet is a reference to the subnetwork to use for this instance. If not specified,
                           the first subnetwork retrieved from the Cluster Region and Network is picked.
                         type: string
+                      instanceTerminationAction:
+                        description: |-
+                          InstanceTerminationAction specifies the termination action for the instance upon preemption.
+                          The default action is "Stop".
+                        enum:
+                        - Delete
+                        - Stop
+                        type: string
                     required:
                     - instanceType
                     type: object
