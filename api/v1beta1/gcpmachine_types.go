@@ -328,9 +328,9 @@ type GCPMachineSpec struct {
 
 	// ProvisioningModel defines if instance is spot.
 	// If set to "Standard" while preemptible is true, then the VM will be of type "Preemptible".
-	// If "Spot", VM type is "Spot".
+
+	// If "Spot", VM type is "Spot". When unspecified, defaults to "Standard".
 	// +kubebuilder:validation:Enum=Standard;Spot
-	// +kubebuilder:default=Standard
 	// +optional
 	ProvisioningModel *ProvisioningModel `json:"provisioningModel,omitempty"`
 

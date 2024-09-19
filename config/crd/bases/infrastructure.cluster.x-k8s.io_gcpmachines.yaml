@@ -232,11 +232,10 @@ spec:
                 description: Preemptible defines if instance is preemptible
                 type: boolean
               provisioningModel:
-                default: Standard
                 description: |-
                   ProvisioningModel defines if instance is spot. 
                   If set to "Standard" while preemptible is true, then the VM will be of type "Preemptible". 
-                  If "Spot", VM type is "Spot".
+                  If "Spot", VM type is "Spot". When unspecified, defaults to "Standard".
                 enum:
                 - Standard
                 - Spot

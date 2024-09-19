@@ -425,8 +425,16 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 			Preemptible: m.GCPMachine.Spec.Preemptible,
 		},
 	}
-	if m.GCPMachine.Spec.ProvisioningModel != nil && *m.GCPMachine.Spec.ProvisioningModel == infrav1.ProvisioningModelSpot {
-		instance.Scheduling.ProvisioningModel = "SPOT"
+
+	if m.GCPMachine.Spec.ProvisioningModel != nil {
+		switch *m.GCPMachine.Spec.ProvisioningModel {
+		case infrav1.ProvisioningModelSpot:
+			instance.Scheduling.ProvisioningModel = "SPOT"
+		case infrav1.ProvisioningModelStandard:
+			instance.Scheduling.ProvisioningModel = "STANDARD"
+		default:
+			log.Error(errors.New("Invalid value"), "Unknown ProvisioningModel value", "Spec.ProvisioningModel", *m.GCPMachine.Spec.ProvisioningModel)
+		}
 	}
 
 	instance.CanIpForward = true
