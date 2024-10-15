@@ -191,6 +191,31 @@ spec:
                 items:
                   type: string
                 type: array
+              aliasIpRanges:
+                description: AliasIpRanges let you assign ranges of internal IP addresses
+                  as aliases to a VM's network interfaces.
+                items:
+                  description: AliasIpRange is an alias IP range attached to an instance's
+                    network interface.
+                  properties:
+                    ipCidrRange:
+                      description: |-
+                        IpCidrRange is the IP alias ranges to allocate for this interface. This IP
+                        CIDR range must belong to the specified subnetwork and cannot contain IP
+                        addresses reserved by system or used by other network interfaces. This range
+                        may be a single IP address (such as 10.2.3.4), a netmask (such as /24) or a
+                        CIDR-formatted string (such as 10.1.2.0/24).
+                      type: string
+                    subnetworkRangeName:
+                      description: |-
+                        SubnetworkRangeName is the name of a subnetwork secondary IP range from which
+                        to allocate an IP alias range. If not specified, the primary range of the
+                        subnetwork is used.
+                      type: string
+                  required:
+                  - ipCidrRange
+                  type: object
+                type: array
               confidentialCompute:
                 description: |-
                   ConfidentialCompute Defines whether the instance should have confidential compute enabled.
@@ -234,6 +259,14 @@ spec:
                 description: ImageFamily is the full reference to a valid image family
                   to be used for this machine.
                 type: string
+              instanceTerminationAction:
+                description: |-
+                  InstanceTerminationAction specifies the termination action for the instance upon preemption.
+                   GCP API defaults to "Unspecified", which defaults the action to "Stop".
+                enum:
+                - Delete
+                - Stop
+                type: string
               instanceType:
                 description: 'InstanceType is the type of instance to create. Example:
                   n1.standard-2'
@@ -258,15 +291,6 @@ spec:
               preemptible:
                 description: Preemptible defines if instance is preemptible
                 type: boolean
-              provisioningModel:
-                description: |-
-                  ProvisioningModel defines if instance is spot. 
-                  If set to "Standard" while preemptible is true, then the VM will be of type "Preemptible". 
-                  If "Spot", VM type is "Spot". When unspecified, defaults to "Standard".
-                enum:
-                - Standard
-                - Spot
-                type: string
               providerID:
                 description: ProviderID is the unique identifier as specified by the
                   cloud provider.
@@ -468,36 +492,6 @@ spec:
                 description: |-
                   Subnet is a reference to the subnetwork to use for this instance. If not specified,
                   the first subnetwork retrieved from the Cluster Region and Network is picked.
-                type: string
-              aliasIpRanges:
-                description: |-
-                  AliasIpRanges let you assign ranges of internal IP addresses as aliases to a VM's network interfaces.
-                items:
-                  description: AliasIpRange defines a range to be attached to an instance's network interface.
-                  properties:
-                    ipCidrRange:
-                      description: |-
-                        IpCidrRange is the IP alias ranges to allocate for this interface. This IP CIDR range 
-                        must belong to the specified subnetwork and cannot contain IP addresses reserved by system or 
-                        used by other network interfaces. This range may be a single IP address (such as 10.2.3.4), 
-                        a netmask (such as /24) or a CIDR-formatted string (such as 10.1.2.0/24)
-                      type: string
-                    subnetworkRangeName:
-                      description: |-
-                        SubnetworkRangeName is the name of a subnetwork secondary IP range from which 
-                        to allocate an IP alias range. If not specified, the primary range of the subnetwork is used.
-                      type: string
-                  required:
-                  - ipCidrRange
-                  type: object
-                type: array
-              instanceTerminationAction:
-                description: |-
-                  InstanceTerminationAction specifies the termination action for the instance upon preemption.
-                  The default action is "Stop".
-                enum:
-                - Delete
-                - Stop
                 type: string
             required:
             - instanceType
