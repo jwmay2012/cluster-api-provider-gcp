@@ -50,3 +50,5 @@ spec:
     vmSize: E2
     provisioningModel: Spot
 ```
+
+NOTE: specifying `preemptible: true` and `provisioningModel: Spot` is equivalent to only `provisioningModel: Spot`. Spot takes priority. 

@@ -397,6 +397,22 @@ func (m *MachineScope) InstanceAdditionalMetadataSpec() *compute.Metadata {
 	return metadata
 }
 
+// InstanceGuestAcceleratorsSpec returns a slice of Guest Accelerator Config specs.
+func (m *MachineScope) InstanceGuestAcceleratorsSpec() []*compute.AcceleratorConfig {
+	if len(m.GCPMachine.Spec.GuestAccelerators) == 0 {
+		return nil
+	}
+	accelConfigs := make([]*compute.AcceleratorConfig, 0, len(m.GCPMachine.Spec.GuestAccelerators))
+	for _, accel := range m.GCPMachine.Spec.GuestAccelerators {
+		accelConfig := &compute.AcceleratorConfig{
+			AcceleratorType:  accel.Type,
+			AcceleratorCount: accel.Count,
+		}
+		accelConfigs = append(accelConfigs, accelConfig)
+	}
+	return accelConfigs
+}
+
 // InstanceSpec returns instance spec.
 func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 	instance := &compute.Instance{
@@ -424,6 +440,16 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 		Scheduling: &compute.Scheduling{
 			Preemptible: m.GCPMachine.Spec.Preemptible,
 		},
+	}
+	if m.GCPMachine.Spec.ProvisioningModel != nil {
+		switch *m.GCPMachine.Spec.ProvisioningModel {
+		case infrav1.ProvisioningModelSpot:
+			instance.Scheduling.ProvisioningModel = "SPOT"
+		case infrav1.ProvisioningModelStandard:
+			instance.Scheduling.ProvisioningModel = "STANDARD"
+		default:
+			log.Error(errors.New("Invalid value"), "Unknown ProvisioningModel value", "Spec.ProvisioningModel", *m.GCPMachine.Spec.ProvisioningModel)
+		}
 	}
 
 	if m.GCPMachine.Spec.ProvisioningModel != nil {
@@ -491,6 +517,8 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 	instance.Metadata = m.InstanceAdditionalMetadataSpec()
 	instance.ServiceAccounts = append(instance.ServiceAccounts, m.InstanceServiceAccountsSpec())
 	instance.NetworkInterfaces = append(instance.NetworkInterfaces, m.InstanceNetworkInterfaceSpec())
+	instance.GuestAccelerators = m.InstanceGuestAcceleratorsSpec()
+
 	return instance
 }
 

@@ -216,12 +216,6 @@ type CustomerEncryptionKey struct {
 	// +optional
 	SuppliedKey *SuppliedKey `json:"suppliedKey,omitempty"`
 }
-type ProvisioningModel string
-
-const (
-	ProvisioningModelStandard ProvisioningModel = "Standard"
-	ProvisioningModelSpot     ProvisioningModel = "Spot"
-)
 
 // AliasIpRange is an alias IP range attached to an instance's network interface.
 type AliasIpRange struct {
@@ -236,6 +230,16 @@ type AliasIpRange struct {
 	// subnetwork is used.
 	SubnetworkRangeName string `json:"subnetworkRangeName,omitempty"`
 }
+
+// ProvisioningModel is a type for Spot VM enablement.
+type ProvisioningModel string
+
+const (
+	// ProvisioningModelStandard specifies the VM type to NOT be Spot.
+	ProvisioningModelStandard ProvisioningModel = "Standard"
+	// ProvisioningModelSpot specifies the VM type to be Spot.
+	ProvisioningModelSpot ProvisioningModel = "Spot"
+)
 
 // GCPMachineSpec defines the desired state of GCPMachine.
 type GCPMachineSpec struct {
@@ -328,7 +332,6 @@ type GCPMachineSpec struct {
 
 	// ProvisioningModel defines if instance is spot.
 	// If set to "Standard" while preemptible is true, then the VM will be of type "Preemptible".
-
 	// If "Spot", VM type is "Spot". When unspecified, defaults to "Standard".
 	// +kubebuilder:validation:Enum=Standard;Spot
 	// +optional
@@ -367,6 +370,24 @@ type GCPMachineSpec struct {
 	// +kubebuilder:validation:Enum=Delete;Stop
 	// +optional
 	InstanceTerminationAction *InstanceTerminationAction `json:"instanceTerminationAction,omitempty"`
+
+	// GuestAccelerators is a list of the type and count of accelerator cards
+	// attached to the instance.
+	GuestAccelerators []Accelerator `json:"guestAccelerators,omitempty"`
+}
+
+// Accelerator is a specification of the type and number of accelerator
+// cards attached to the instance.
+type Accelerator struct {
+	// Count is the number of the guest accelerator cards exposed to this
+	// instance.
+	Count int64 `json:"count,omitempty"`
+	// Type is the full or partial URL of the accelerator type resource to
+	// attach to this instance. For example:
+	// projects/my-project/zones/us-central1-c/acceleratorTypes/nvidia-tesla-p100
+	// If you are creating an instance template, specify only the accelerator name.
+	// See GPUs on Compute Engine for a full list of accelerator types.
+	Type string `json:"type,omitempty"`
 }
 
 type InstanceTerminationAction string
