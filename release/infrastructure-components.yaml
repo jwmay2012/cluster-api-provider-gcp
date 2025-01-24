@@ -3346,8 +3346,6 @@ spec:
               fieldPath: metadata.namespace
         image: ${CAPG_IMAGE}
         imagePullPolicy: IfNotPresent
-        imagePullSecrets:
-        - name: capg-registry
         livenessProbe:
           httpGet:
             path: /healthz
@@ -3386,6 +3384,8 @@ spec:
           readOnly: true
         - mountPath: /home/.gcp
           name: credentials
+      imagePullSecrets:
+      - name: capg-registry
       serviceAccountName: capg-manager
       terminationGracePeriodSeconds: 10
       tolerations:
