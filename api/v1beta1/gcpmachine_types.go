@@ -224,6 +224,12 @@ type AliasIpRange struct {
 	// addresses reserved by system or used by other network interfaces. This range
 	// may be a single IP address (such as 10.2.3.4), a netmask (such as /24) or a
 	// CIDR-formatted string (such as 10.1.2.0/24).
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Pattern=`^((([0-9]|[0-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[0-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])/([0-9]|[12][0-9]|3[0-2])|(([0-9]|[0-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[0-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])|(/([0-9]|[12][0-9]|3[0-2])))$`
+	// + ---
+	// + This regex was constructed from
+	// + https://blog.markhatton.co.uk/2011/03/15/regular-expressions-for-ip-addresses-cidr-ranges-and-hostnames/
+	// + (IPv4/mask) or (IPv4) or (mask)
 	IpCidrRange string `json:"ipCidrRange"`
 	// SubnetworkRangeName is the name of a subnetwork secondary IP range from which
 	// to allocate an IP alias range. If not specified, the primary range of the

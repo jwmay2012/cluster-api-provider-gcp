@@ -205,6 +205,7 @@ spec:
                         addresses reserved by system or used by other network interfaces. This range
                         may be a single IP address (such as 10.2.3.4), a netmask (such as /24) or a
                         CIDR-formatted string (such as 10.1.2.0/24).
+                      pattern: ^((([0-9]|[0-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[0-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])/([0-9]|[12][0-9]|3[0-2])|(([0-9]|[0-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[0-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])|(/([0-9]|[12][0-9]|3[0-2])))$
                       type: string
                     subnetworkRangeName:
                       description: |-
