@@ -356,10 +356,10 @@ func (m *MachineScope) InstanceNetworkInterfaceSpec() *compute.NetworkInterface 
 }
 
 func (m *MachineScope) InstanceNetworkInterfaceAliasIpRangesSpec() []*compute.AliasIpRange {
-	aliasIpRanges := make([]*compute.AliasIpRange, 0, len(m.GCPMachine.Spec.AliasIpRanges))
-	for _, alias := range m.GCPMachine.Spec.AliasIpRanges {
+	aliasIpRanges := make([]*compute.AliasIpRange, 0, len(m.GCPMachine.Spec.AliasIPRanges))
+	for _, alias := range m.GCPMachine.Spec.AliasIPRanges {
 		aliasIpRange := &compute.AliasIpRange{
-			IpCidrRange:         alias.IpCidrRange,
+			IpCidrRange:         alias.IPCidrRange,
 			SubnetworkRangeName: alias.SubnetworkRangeName,
 		}
 		aliasIpRanges = append(aliasIpRanges, aliasIpRange)

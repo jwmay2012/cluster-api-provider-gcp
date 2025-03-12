@@ -191,16 +191,16 @@ spec:
                 items:
                   type: string
                 type: array
-              aliasIpRanges:
-                description: AliasIpRanges let you assign ranges of internal IP addresses
+              aliasIPRanges:
+                description: AliasIPRanges let you assign ranges of internal IP addresses
                   as aliases to a VM's network interfaces.
                 items:
-                  description: AliasIpRange is an alias IP range attached to an instance's
+                  description: AliasIPRange is an alias IP range attached to an instance's
                     network interface.
                   properties:
                     ipCidrRange:
                       description: |-
-                        IpCidrRange is the IP alias ranges to allocate for this interface. This IP
+                        IPCidrRange is the IP alias ranges to allocate for this interface. This IP
                         CIDR range must belong to the specified subnetwork and cannot contain IP
                         addresses reserved by system or used by other network interfaces. This range
                         may be a single IP address (such as 10.2.3.4), a netmask (such as /24) or a

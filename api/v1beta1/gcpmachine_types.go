@@ -217,16 +217,16 @@ type CustomerEncryptionKey struct {
 	SuppliedKey *SuppliedKey `json:"suppliedKey,omitempty"`
 }
 
-// AliasIpRange is an alias IP range attached to an instance's network interface.
-type AliasIpRange struct {
-	// IpCidrRange is the IP alias ranges to allocate for this interface. This IP
+// AliasIPRange is an alias IP range attached to an instance's network interface.
+type AliasIPRange struct {
+	// IPCidrRange is the IP alias ranges to allocate for this interface. This IP
 	// CIDR range must belong to the specified subnetwork and cannot contain IP
 	// addresses reserved by system or used by other network interfaces. This range
 	// may be a single IP address (such as 10.2.3.4), a netmask (such as /24) or a
 	// CIDR-formatted string (such as 10.1.2.0/24).
 	// +kubebuilder:validation:Pattern=`^((([0-9]|[0-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[0-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])/([0-9]|[12][0-9]|3[0-2])|(([0-9]|[0-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[0-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])|(/([0-9]|[12][0-9]|3[0-2])))$`
 	// +required
-	IpCidrRange string `json:"ipCidrRange"`
+	IPCidrRange string `json:"ipCidrRange"`
 	// SubnetworkRangeName is the name of a subnetwork secondary IP range from which
 	// to allocate an IP alias range. If not specified, the primary range of the
 	// subnetwork is used.
@@ -253,9 +253,9 @@ type GCPMachineSpec struct {
 	// +optional
 	Subnet *string `json:"subnet,omitempty"`
 
-	// AliasIpRanges let you assign ranges of internal IP addresses as aliases to a VM's network interfaces.
+	// AliasIPRanges let you assign ranges of internal IP addresses as aliases to a VM's network interfaces.
 	// +optional
-	AliasIpRanges []AliasIpRange `json:"aliasIpRanges,omitempty"`
+	AliasIPRanges []AliasIPRange `json:"aliasIPRanges,omitempty"`
 
 	// ProviderID is the unique identifier as specified by the cloud provider.
 	// +optional
