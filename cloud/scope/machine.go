@@ -323,7 +323,7 @@ func (m *MachineScope) InstanceAdditionalDiskSpec() []*compute.AttachedDisk {
 }
 
 // InstanceNetworkInterfaceSpec returns compute network interface spec.
-func (m *MachineScope) InstanceNetworkInterfaceSpec() *compute.NetworkInterface {
+func (m *MachineScope) InstanceNetworkInterfaceSpec(log logr.Logger) *compute.NetworkInterface {
 	networkInterface := &compute.NetworkInterface{
 		Network: path.Join("projects", m.ClusterGetter.NetworkProject(), "global", "networks", m.ClusterGetter.NetworkName()),
 	}
@@ -338,19 +338,74 @@ func (m *MachineScope) InstanceNetworkInterfaceSpec() *compute.NetworkInterface 
 	}
 
 	if m.GCPMachine.Spec.Subnet != nil {
+		log.Info("Processing subnet field", "subnet", *m.GCPMachine.Spec.Subnet, "machine", m.Name())
 		kludgeSubnetSplit := strings.Split(*m.GCPMachine.Spec.Subnet, ",")
 		networkInterface.Subnetwork = path.Join("projects", m.ClusterGetter.NetworkProject(), "regions", m.ClusterGetter.Region(), "subnetworks", kludgeSubnetSplit[0])
+
 		if len(kludgeSubnetSplit) >= 3 {
+			log.Info("Found kludge format with alias IP range",
+				"machine", m.Name(),
+				"subnet", kludgeSubnetSplit[0],
+				"subnetworkRangeName", kludgeSubnetSplit[1],
+				"ipCidrRange", kludgeSubnetSplit[2])
 			networkInterface.AliasIpRanges = []*compute.AliasIpRange{
 				{
 					IpCidrRange:         kludgeSubnetSplit[2],
 					SubnetworkRangeName: kludgeSubnetSplit[1],
 				},
 			}
+		} else {
+			log.Info("Subnet field does not contain kludge alias format",
+				"machine", m.Name(),
+				"subnet", *m.GCPMachine.Spec.Subnet)
 		}
 	}
 
-	networkInterface.AliasIpRanges = m.InstanceNetworkInterfaceAliasIpRangesSpec()
+	// Log current state before checking new field
+	if networkInterface.AliasIpRanges != nil && len(networkInterface.AliasIpRanges) > 0 {
+		log.Info("AliasIpRanges set from kludge format",
+			"machine", m.Name(),
+			"count", len(networkInterface.AliasIpRanges),
+			"firstRange", networkInterface.AliasIpRanges[0])
+	}
+
+	// Prefer new aliasIPRanges field if it exists, otherwise keep kludge values
+	aliasRanges := m.InstanceNetworkInterfaceAliasIpRangesSpec()
+	log.Info("Checking new aliasIPRanges field",
+		"machine", m.Name(),
+		"aliasIPRangesCount", len(m.GCPMachine.Spec.AliasIPRanges),
+		"processedRangesCount", len(aliasRanges))
+
+	if len(aliasRanges) > 0 {
+		log.Info("Using new aliasIPRanges field (overriding kludge if present)",
+			"machine", m.Name(),
+			"count", len(aliasRanges))
+		for i, r := range aliasRanges {
+			log.Info("New field AliasIpRange",
+				"machine", m.Name(),
+				"index", i,
+				"ipCidrRange", r.IpCidrRange,
+				"subnetworkRangeName", r.SubnetworkRangeName)
+		}
+		networkInterface.AliasIpRanges = aliasRanges
+	} else if networkInterface.AliasIpRanges != nil {
+		log.Info("Keeping kludge format alias ranges (no new field values)",
+			"machine", m.Name(),
+			"count", len(networkInterface.AliasIpRanges))
+	} else {
+		log.Info("No alias IP ranges configured", "machine", m.Name())
+	}
+
+	// Final state log
+	if networkInterface.AliasIpRanges != nil && len(networkInterface.AliasIpRanges) > 0 {
+		for i, r := range networkInterface.AliasIpRanges {
+			log.Info("Final AliasIpRange",
+				"machine", m.Name(),
+				"index", i,
+				"ipCidrRange", r.IpCidrRange,
+				"subnetworkRangeName", r.SubnetworkRangeName)
+		}
+	}
 
 	return networkInterface
 }
@@ -516,7 +571,7 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 	instance.Disks = append(instance.Disks, m.InstanceAdditionalDiskSpec()...)
 	instance.Metadata = m.InstanceAdditionalMetadataSpec()
 	instance.ServiceAccounts = append(instance.ServiceAccounts, m.InstanceServiceAccountsSpec())
-	instance.NetworkInterfaces = append(instance.NetworkInterfaces, m.InstanceNetworkInterfaceSpec())
+	instance.NetworkInterfaces = append(instance.NetworkInterfaces, m.InstanceNetworkInterfaceSpec(log))
 	instance.GuestAccelerators = m.InstanceGuestAcceleratorsSpec()
 
 	return instance
