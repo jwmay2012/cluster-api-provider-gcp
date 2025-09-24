@@ -18,6 +18,8 @@ spec:
       annotations:
         kubectl.kubernetes.io/default-container: manager
     spec:
+      imagePullSecrets:
+      - name: capg-registry
       containers:
       - args:
         - --leader-elect
