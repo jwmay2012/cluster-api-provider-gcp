@@ -445,6 +445,11 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 			log.Error(errors.New("Invalid value"), "Unknown ProvisioningModel value", "Spec.ProvisioningModel", *m.GCPMachine.Spec.ProvisioningModel)
 		}
 	}
+	if seconds := m.GCPMachine.Spec.PreemptionNoticeDurationSeconds; seconds != nil {
+		instance.Scheduling.PreemptionNoticeDuration = &compute.Duration{
+			Seconds: *seconds, ForceSendFields: []string{"Seconds"},
+		}
+	}
 
 	instance.CanIpForward = true
 	if m.GCPMachine.Spec.IPForwarding != nil && *m.GCPMachine.Spec.IPForwarding == infrav1.IPForwardingDisabled {

@@ -519,6 +519,11 @@ func (in *GCPMachineSpec) DeepCopyInto(out *GCPMachineSpec) {
 		*out = new(ProvisioningModel)
 		**out = **in
 	}
+	if in.PreemptionNoticeDurationSeconds != nil {
+		in, out := &in.PreemptionNoticeDurationSeconds, &out.PreemptionNoticeDurationSeconds
+		*out = new(int64)
+		**out = **in
+	}
 	if in.IPForwarding != nil {
 		in, out := &in.IPForwarding, &out.IPForwarding
 		*out = new(IPForwarding)
