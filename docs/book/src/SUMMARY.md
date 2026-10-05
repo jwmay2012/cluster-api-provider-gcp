@@ -21,6 +21,7 @@
     - [GPUs](./topics/gpus.md)
     - [Machine Locations](./topics/machine-locations.md)
     - [Preemptible VMs](./topics/preemptible-vms.md)
+    - [Spot Preemption Notice](./topics/spot-preemption-notice.md)
     - [Nested Virtualization](./topics/nested-virtualization.md)
 - [Developer Guide](./developers/index.md)
     - [Development](./developers/development.md)

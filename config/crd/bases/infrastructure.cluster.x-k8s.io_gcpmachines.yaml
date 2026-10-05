@@ -299,6 +299,17 @@ spec:
               preemptible:
                 description: Preemptible defines if instance is preemptible
                 type: boolean
+              preemptionNoticeDurationSeconds:
+                description: |-
+                  PreemptionNoticeDurationSeconds is the advance metadata notice before a Spot VM begins OS shutdown.
+                  The supported values are 0 (no advance notice) and 120 seconds.
+                  This is separate from the best-effort guest shutdown period and requires ProvisioningModel Spot.
+                  When omitted, Compute Engine uses its default of no advance notice.
+                enum:
+                - 0
+                - 120
+                format: int64
+                type: integer
               providerID:
                 description: ProviderID is the unique identifier as specified by the
                   cloud provider.

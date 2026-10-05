@@ -65,6 +65,9 @@ func (*gcpMachineWebhook) ValidateCreate(_ context.Context, obj runtime.Object) 
 
 	clusterlog.Info("validate create", "name", m.Name)
 
+	if err := validatePreemptionNotice(m.Spec); err != nil {
+		return nil, err
+	}
 	if err := validateConfidentialCompute(m.Spec); err != nil {
 		return nil, err
 	}
@@ -122,6 +125,19 @@ func (*gcpMachineWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (a
 
 // Default implements webhookutil.defaulter so a webhook will be registered for the type.
 func (*gcpMachineWebhook) Default(_ context.Context, _ runtime.Object) error {
+	return nil
+}
+
+func validatePreemptionNotice(spec GCPMachineSpec) error {
+	if spec.PreemptionNoticeDurationSeconds == nil {
+		return nil
+	}
+	if spec.ProvisioningModel == nil || *spec.ProvisioningModel != ProvisioningModelSpot {
+		return fmt.Errorf("preemptionNoticeDurationSeconds requires provisioningModel Spot")
+	}
+	if seconds := *spec.PreemptionNoticeDurationSeconds; seconds != 0 && seconds != 120 {
+		return fmt.Errorf("preemptionNoticeDurationSeconds must be 0 or 120")
+	}
 	return nil
 }
 

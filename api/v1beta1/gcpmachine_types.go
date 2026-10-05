@@ -348,6 +348,14 @@ type GCPMachineSpec struct {
 	// +optional
 	ProvisioningModel *ProvisioningModel `json:"provisioningModel,omitempty"`
 
+	// PreemptionNoticeDurationSeconds is the advance metadata notice before a Spot VM begins OS shutdown.
+	// The supported values are 0 (no advance notice) and 120 seconds.
+	// This is separate from the best-effort guest shutdown period and requires ProvisioningModel Spot.
+	// When omitted, Compute Engine uses its default of no advance notice.
+	// +kubebuilder:validation:Enum=0;120
+	// +optional
+	PreemptionNoticeDurationSeconds *int64 `json:"preemptionNoticeDurationSeconds,omitempty"`
+
 	// IPForwarding Allows this instance to send and receive packets with non-matching destination or source IPs.
 	// This is required if you plan to use this instance to forward routes. Defaults to enabled.
 	// +kubebuilder:validation:Enum=Enabled;Disabled
