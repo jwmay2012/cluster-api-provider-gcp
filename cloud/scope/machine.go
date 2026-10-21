@@ -452,6 +452,12 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 		}
 	}
 
+	if seconds := m.GCPMachine.Spec.PreemptionNoticeDurationSeconds; seconds != nil {
+		instance.Scheduling.PreemptionNoticeDuration = &compute.Duration{
+			Seconds: *seconds, ForceSendFields: []string{"Seconds"},
+		}
+	}
+
 	instance.CanIpForward = true
 	if m.GCPMachine.Spec.IPForwarding != nil && *m.GCPMachine.Spec.IPForwarding == infrav1.IPForwardingDisabled {
 		instance.CanIpForward = false
@@ -509,6 +515,11 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 	instance.GuestAccelerators = instanceGuestAcceleratorsSpec(m.GCPMachine.Spec.GuestAccelerators)
 	if len(instance.GuestAccelerators) > 0 {
 		instance.Scheduling.OnHostMaintenance = onHostMaintenanceTerminate
+	}
+	if m.GCPMachine.Spec.EnableNestedVirtualization != nil && *m.GCPMachine.Spec.EnableNestedVirtualization {
+		instance.AdvancedMachineFeatures = &compute.AdvancedMachineFeatures{
+			EnableNestedVirtualization: true,
+		}
 	}
 
 	return instance

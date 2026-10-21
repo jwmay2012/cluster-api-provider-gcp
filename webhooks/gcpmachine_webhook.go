@@ -62,6 +62,9 @@ var (
 func (*GCPMachine) ValidateCreate(_ context.Context, m *infrav1.GCPMachine) (admission.Warnings, error) {
 	clusterlog.Info("validate create", "name", m.Name)
 
+	if err := validatePreemptionNotice(m.Spec); err != nil {
+		return nil, err
+	}
 	if err := validateConfidentialCompute(m.Spec); err != nil {
 		return nil, err
 	}
@@ -111,6 +114,19 @@ func (*GCPMachine) ValidateDelete(_ context.Context, _ *infrav1.GCPMachine) (adm
 }
 
 func (*GCPMachine) Default(_ context.Context, _ *infrav1.GCPMachine) error {
+	return nil
+}
+
+func validatePreemptionNotice(spec infrav1.GCPMachineSpec) error {
+	if spec.PreemptionNoticeDurationSeconds == nil {
+		return nil
+	}
+	if spec.ProvisioningModel == nil || *spec.ProvisioningModel != infrav1.ProvisioningModelSpot {
+		return fmt.Errorf("preemptionNoticeDurationSeconds requires provisioningModel Spot")
+	}
+	if seconds := *spec.PreemptionNoticeDurationSeconds; seconds != 0 && seconds != 120 {
+		return fmt.Errorf("preemptionNoticeDurationSeconds must be 0 or 120")
+	}
 	return nil
 }
 

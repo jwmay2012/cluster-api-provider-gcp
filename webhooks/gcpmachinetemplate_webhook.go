@@ -51,6 +51,9 @@ var (
 func (*GCPMachineTemplate) ValidateCreate(_ context.Context, r *infrav1.GCPMachineTemplate) (admission.Warnings, error) {
 	clusterlog.Info("validate create", "name", r.Name)
 
+	if err := validatePreemptionNotice(r.Spec.Template.Spec); err != nil {
+		return nil, err
+	}
 	return nil, validateConfidentialCompute(r.Spec.Template.Spec)
 }
 
