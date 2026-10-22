@@ -122,10 +122,10 @@ func validatePreemptionNotice(spec infrav1.GCPMachineSpec) error {
 		return nil
 	}
 	if spec.ProvisioningModel == nil || *spec.ProvisioningModel != infrav1.ProvisioningModelSpot {
-		return fmt.Errorf("preemptionNoticeDurationSeconds requires provisioningModel Spot")
+		return errors.New("preemptionNoticeDurationSeconds requires provisioningModel Spot")
 	}
 	if seconds := *spec.PreemptionNoticeDurationSeconds; seconds != 0 && seconds != 120 {
-		return fmt.Errorf("preemptionNoticeDurationSeconds must be 0 or 120")
+		return errors.New("preemptionNoticeDurationSeconds must be 0 or 120")
 	}
 	return nil
 }

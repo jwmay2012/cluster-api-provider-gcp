@@ -282,7 +282,7 @@ func (m *MachinePoolScope) InstanceTemplateResource(ctx context.Context) (*compu
 	if m.GCPMachinePool.Spec.ProvisioningModel != nil {
 		switch *m.GCPMachinePool.Spec.ProvisioningModel {
 		case infrav1.ProvisioningModelSpot:
-			instance.Scheduling.ProvisioningModel = "SPOT"
+			instance.Scheduling.ProvisioningModel = provisioningModelSpot
 		case infrav1.ProvisioningModelStandard:
 			instance.Scheduling.ProvisioningModel = "STANDARD"
 		default:
