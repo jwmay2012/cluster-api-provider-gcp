@@ -19,6 +19,8 @@
     - [Alias IP Ranges](./topics/alias-ip-ranges.md)
     - [Conformance](./topics/conformance.md)
     - [GPUs](./topics/gpus.md)
+    - [Nested Virtualization](./topics/nested-virtualization.md)
+    - [Spot Preemption Notice](./topics/spot-preemption-notice.md)
     - [Machine Locations](./topics/machine-locations.md)
     - [Preemptible VMs](./topics/preemptible-vms.md)
 - [Developer Guide](./developers/index.md)

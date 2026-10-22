@@ -341,6 +341,14 @@ type GCPMachineSpec struct {
 	// +optional
 	ProvisioningModel *ProvisioningModel `json:"provisioningModel,omitempty"`
 
+	// PreemptionNoticeDurationSeconds is the advance metadata notice before a Spot VM begins OS shutdown.
+	// The supported values are 0 (no advance notice) and 120 seconds.
+	// This is separate from the best-effort guest shutdown period and requires ProvisioningModel Spot.
+	// When omitted, Compute Engine uses its default of no advance notice.
+	// +kubebuilder:validation:Enum=0;120
+	// +optional
+	PreemptionNoticeDurationSeconds *int64 `json:"preemptionNoticeDurationSeconds,omitempty"`
+
 	// IPForwarding Allows this instance to send and receive packets with non-matching destination or source IPs.
 	// This is required if you plan to use this instance to forward routes. Defaults to enabled.
 	// +kubebuilder:validation:Enum=Enabled;Disabled
@@ -378,6 +386,13 @@ type GCPMachineSpec struct {
 	// attached to the instance.
 	// +optional
 	GuestAccelerators []Accelerator `json:"guestAccelerators,omitempty"`
+
+	// EnableNestedVirtualization specifies whether to enable nested virtualization or not
+	// (default is false). Nested virtualization allows VMs to run inside other VMs.
+	// Note: Requires at minimum "Intel Haswell" CPU platform.
+	// This field cannot be changed after instance creation.
+	// +optional
+	EnableNestedVirtualization *bool `json:"enableNestedVirtualization,omitempty"`
 }
 
 // Accelerator is a specification of the type and number of accelerator

@@ -40,11 +40,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Constants for GCP OnHostMaintenance values.
+// Constants for GCP API enum values.
 // These are not exported, because they are not _our_ API, but they are used in multiple places.
 const (
 	onHostMaintenanceTerminate = "TERMINATE"
 	onHostMaintenanceMigrate   = "MIGRATE"
+	provisioningModelSpot      = "SPOT"
 )
 
 // MachineScopeParams defines the input parameters used to create a new MachineScope.
@@ -444,11 +445,17 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 	if m.GCPMachine.Spec.ProvisioningModel != nil {
 		switch *m.GCPMachine.Spec.ProvisioningModel {
 		case infrav1.ProvisioningModelSpot:
-			instance.Scheduling.ProvisioningModel = "SPOT"
+			instance.Scheduling.ProvisioningModel = provisioningModelSpot
 		case infrav1.ProvisioningModelStandard:
 			instance.Scheduling.ProvisioningModel = "STANDARD"
 		default:
 			log.Error(errors.New("Invalid value"), "Unknown ProvisioningModel value", "Spec.ProvisioningModel", *m.GCPMachine.Spec.ProvisioningModel)
+		}
+	}
+
+	if seconds := m.GCPMachine.Spec.PreemptionNoticeDurationSeconds; seconds != nil {
+		instance.Scheduling.PreemptionNoticeDuration = &compute.Duration{
+			Seconds: *seconds, ForceSendFields: []string{"Seconds"},
 		}
 	}
 
@@ -509,6 +516,11 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 	instance.GuestAccelerators = instanceGuestAcceleratorsSpec(m.GCPMachine.Spec.GuestAccelerators)
 	if len(instance.GuestAccelerators) > 0 {
 		instance.Scheduling.OnHostMaintenance = onHostMaintenanceTerminate
+	}
+	if m.GCPMachine.Spec.EnableNestedVirtualization != nil && *m.GCPMachine.Spec.EnableNestedVirtualization {
+		instance.AdvancedMachineFeatures = &compute.AdvancedMachineFeatures{
+			EnableNestedVirtualization: true,
+		}
 	}
 
 	return instance

@@ -610,6 +610,11 @@ func (in *GCPMachineSpec) DeepCopyInto(out *GCPMachineSpec) {
 		*out = new(ProvisioningModel)
 		**out = **in
 	}
+	if in.PreemptionNoticeDurationSeconds != nil {
+		in, out := &in.PreemptionNoticeDurationSeconds, &out.PreemptionNoticeDurationSeconds
+		*out = new(int64)
+		**out = **in
+	}
 	if in.IPForwarding != nil {
 		in, out := &in.IPForwarding, &out.IPForwarding
 		*out = new(IPForwarding)
@@ -639,6 +644,11 @@ func (in *GCPMachineSpec) DeepCopyInto(out *GCPMachineSpec) {
 		in, out := &in.GuestAccelerators, &out.GuestAccelerators
 		*out = make([]Accelerator, len(*in))
 		copy(*out, *in)
+	}
+	if in.EnableNestedVirtualization != nil {
+		in, out := &in.EnableNestedVirtualization, &out.EnableNestedVirtualization
+		*out = new(bool)
+		**out = **in
 	}
 }
 
