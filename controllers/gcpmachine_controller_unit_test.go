@@ -129,7 +129,9 @@ func TestRunningControlPlaneRequeuesUntilNodeRegistration(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "my-cluster", Namespace: "default"},
 		Spec: infrav1.GCPClusterSpec{
 			Project: "my-proj", Region: "us-central1",
-			LoadBalancer: infrav1.LoadBalancerSpec{LoadBalancerType: ptr.To(infrav1.Internal)},
+			LoadBalancer: infrav1.LoadBalancerSpec{
+				LoadBalancerType: ptr.To(infrav1.Internal), ControlPlaneRegistration: ptr.To(infrav1.ControlPlaneRegistrationAfterNodeReference),
+			},
 		},
 	}
 	gcpMachine := &infrav1.GCPMachine{ObjectMeta: metav1.ObjectMeta{Name: "my-machine", Namespace: "default"}}

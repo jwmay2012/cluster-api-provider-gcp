@@ -59,6 +59,7 @@ func TestControlPlaneRegistration(t *testing.T) {
 	for _, test := range []struct {
 		name          string
 		lbType        infrav1.LoadBalancerType
+		policy        *infrav1.ControlPlaneRegistrationPolicy
 		initialized   *bool
 		nodeName      string
 		worker        bool
@@ -66,14 +67,17 @@ func TestControlPlaneRegistration(t *testing.T) {
 		registerLater bool
 		wantAdds      int
 	}{
-		{name: "first control plane before initialization status", lbType: infrav1.Internal, wantAdds: 1},
-		{name: "first control plane with initialization false", lbType: infrav1.Internal, initialized: ptr.To(false), wantAdds: 1},
-		{name: "replacement waits for Node then registers", lbType: infrav1.Internal, initialized: ptr.To(true), registerLater: true},
-		{name: "joined replacement registers", lbType: infrav1.Internal, initialized: ptr.To(true), nodeName: "my-node", wantAdds: 1},
-		{name: "combined load balancer waits for Node", lbType: infrav1.InternalExternal, initialized: ptr.To(true), registerLater: true},
+		{name: "default preserves control planes without Nodes", lbType: infrav1.Internal, initialized: ptr.To(true), wantAdds: 1},
+		{name: "explicit Immediate preserves registration", lbType: infrav1.Internal, policy: ptr.To(infrav1.ControlPlaneRegistrationImmediate), initialized: ptr.To(true), wantAdds: 1},
+		{name: "first control plane before initialization status", lbType: infrav1.Internal, policy: ptr.To(infrav1.ControlPlaneRegistrationAfterNodeReference), wantAdds: 1},
+		{name: "first control plane with initialization false", lbType: infrav1.Internal, policy: ptr.To(infrav1.ControlPlaneRegistrationAfterNodeReference), initialized: ptr.To(false), wantAdds: 1},
+		{name: "replacement waits for Node then registers", lbType: infrav1.Internal, policy: ptr.To(infrav1.ControlPlaneRegistrationAfterNodeReference), initialized: ptr.To(true), registerLater: true},
+		{name: "joined replacement registers", lbType: infrav1.Internal, policy: ptr.To(infrav1.ControlPlaneRegistrationAfterNodeReference), initialized: ptr.To(true), nodeName: "my-node", wantAdds: 1},
+		{name: "combined load balancer waits for Node", lbType: infrav1.InternalExternal, policy: ptr.To(infrav1.ControlPlaneRegistrationAfterNodeReference), initialized: ptr.To(true), registerLater: true},
 		{name: "external load balancer preserves registration", lbType: infrav1.External, initialized: ptr.To(true), wantAdds: 1},
-		{name: "existing backend is preserved", lbType: infrav1.Internal, initialized: ptr.To(true), registered: true},
-		{name: "worker is never registered", lbType: infrav1.Internal, initialized: ptr.To(true), worker: true},
+		{name: "external load balancer can explicitly defer registration", lbType: infrav1.External, policy: ptr.To(infrav1.ControlPlaneRegistrationAfterNodeReference), initialized: ptr.To(true), registerLater: true},
+		{name: "existing backend is preserved", lbType: infrav1.Internal, policy: ptr.To(infrav1.ControlPlaneRegistrationAfterNodeReference), initialized: ptr.To(true), registered: true},
+		{name: "worker is never registered", lbType: infrav1.Internal, policy: ptr.To(infrav1.ControlPlaneRegistrationAfterNodeReference), initialized: ptr.To(true), worker: true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := context.Background()
@@ -82,6 +86,7 @@ func TestControlPlaneRegistration(t *testing.T) {
 			cluster.Status.Initialization.ControlPlaneInitialized = test.initialized
 			gcpCluster := fakeGCPCluster.DeepCopy()
 			gcpCluster.Spec.LoadBalancer.LoadBalancerType = ptr.To(test.lbType)
+			gcpCluster.Spec.LoadBalancer.ControlPlaneRegistration = test.policy
 			clusterScope, err := scope.NewClusterScope(ctx, scope.ClusterScopeParams{
 				Client: client, Cluster: cluster, GCPCluster: gcpCluster,
 				GCPServices: scope.GCPServices{Compute: &compute.Service{}},

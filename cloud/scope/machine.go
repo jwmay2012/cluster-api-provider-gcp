@@ -143,10 +143,10 @@ func (m *MachineScope) IsControlPlane() bool {
 	return IsControlPlaneMachine(m.Machine)
 }
 
-// CanRegisterControlPlaneInstance keeps unjoined replacement nodes out of the internal API load balancer.
+// CanRegisterControlPlaneInstance applies the cluster's API backend admission policy.
 func (m *MachineScope) CanRegisterControlPlaneInstance() bool {
-	lbType := ptr.Deref(m.ClusterGetter.LoadBalancer().LoadBalancerType, infrav1.External)
-	return (lbType != infrav1.Internal && lbType != infrav1.InternalExternal) ||
+	policy := ptr.Deref(m.ClusterGetter.LoadBalancer().ControlPlaneRegistration, infrav1.ControlPlaneRegistrationImmediate)
+	return policy != infrav1.ControlPlaneRegistrationAfterNodeReference ||
 		!m.ClusterGetter.ControlPlaneInitialized() || m.Machine.Status.NodeRef.IsDefined()
 }
 

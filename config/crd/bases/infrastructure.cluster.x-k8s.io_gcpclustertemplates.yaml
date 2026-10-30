@@ -136,6 +136,19 @@ spec:
                             maxLength: 16
                             pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
                             type: string
+                          controlPlaneRegistration:
+                            description: |-
+                              ControlPlaneRegistration determines when new control-plane GCPMachine instances
+                              enter the shared API instance groups. Defaults to Immediate (when the VM is running).
+                              AfterNodeReference waits for Machine.status.nodeRef once the cluster control plane
+                              is initialized; initial bootstrap still registers immediately. Use it only with
+                              control planes that register Nodes after their local API server starts, such as
+                              kubeadm with ControlPlaneKubeletLocalMode enabled. It applies to all configured
+                              load balancers and does not remove existing members when changed.
+                            enum:
+                            - Immediate
+                            - AfterNodeReference
+                            type: string
                           internalLoadBalancer:
                             description: InternalLoadBalancer is the configuration
                               for an Internal Passthrough Network Load Balancer.

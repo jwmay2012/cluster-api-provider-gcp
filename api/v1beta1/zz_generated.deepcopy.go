@@ -867,6 +867,11 @@ func (in *LoadBalancerSpec) DeepCopyInto(out *LoadBalancerSpec) {
 		*out = new(LoadBalancerType)
 		**out = **in
 	}
+	if in.ControlPlaneRegistration != nil {
+		in, out := &in.ControlPlaneRegistration, &out.ControlPlaneRegistration
+		*out = new(ControlPlaneRegistrationPolicy)
+		**out = **in
+	}
 	if in.InternalLoadBalancer != nil {
 		in, out := &in.InternalLoadBalancer, &out.InternalLoadBalancer
 		*out = new(LoadBalancer)
