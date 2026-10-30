@@ -241,6 +241,9 @@ func (r *GCPMachineReconciler) reconcile(ctx context.Context, machineScope *scop
 		record.Eventf(machineScope.GCPMachine, "GCPMachineReconcile", "GCPMachine instance is running - instance-id: %s", *machineScope.GetInstanceID())
 		record.Event(machineScope.GCPMachine, "GCPMachineReconcile", "Reconciled")
 		machineScope.SetReady()
+		if machineScope.IsControlPlane() && !machineScope.CanRegisterControlPlaneInstance() {
+			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		}
 		return ctrl.Result{}, nil
 	default:
 		machineScope.SetFailureReason("UpdateError")

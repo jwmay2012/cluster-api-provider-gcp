@@ -143,6 +143,13 @@ func (m *MachineScope) IsControlPlane() bool {
 	return IsControlPlaneMachine(m.Machine)
 }
 
+// CanRegisterControlPlaneInstance keeps unjoined replacement nodes out of the internal API load balancer.
+func (m *MachineScope) CanRegisterControlPlaneInstance() bool {
+	lbType := ptr.Deref(m.ClusterGetter.LoadBalancer().LoadBalancerType, infrav1.External)
+	return (lbType != infrav1.Internal && lbType != infrav1.InternalExternal) ||
+		!m.ClusterGetter.ControlPlaneInitialized() || m.Machine.Status.NodeRef.IsDefined()
+}
+
 // Role returns the machine role from the labels.
 func (m *MachineScope) Role() string {
 	if IsControlPlaneMachine(m.Machine) {

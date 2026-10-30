@@ -169,6 +169,13 @@ func (s *Service) createOrGetInstance(ctx context.Context) (*compute.Instance, e
 
 func (s *Service) registerControlPlaneInstance(ctx context.Context, instance *compute.Instance) error {
 	log := log.FromContext(ctx)
+	// Before the first API server exists, registration is needed for bootstrap.
+	// Later nodes must join first: an unready VM can forward a health probe to
+	// a peer before its guest routes are configured and become falsely healthy.
+	if !s.scope.CanRegisterControlPlaneInstance() {
+		log.V(2).Info("Waiting for the control-plane Node before registering the API backend", "name", instance.Name)
+		return nil
+	}
 	instancegroupName := s.scope.ControlPlaneGroupName()
 	log.V(2).Info("Ensuring instance already registered in the instancegroup", "name", instance.Name, "instancegroup", instancegroupName)
 	instancegroupKey := meta.ZonalKey(instancegroupName, s.scope.Zone())
