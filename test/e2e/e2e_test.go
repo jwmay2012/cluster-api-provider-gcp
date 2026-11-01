@@ -400,7 +400,7 @@ var _ = Describe("Workload cluster creation", func() {
 	})
 
 	Context("Creating a control-plane cluster with an external and an internal load balancer", func() {
-		It("Should create a cluster with 1 control-plane and 1 worker node with an external and an internal load balancer", func() {
+		DescribeTable("Should create a cluster with 1 control-plane and 1 worker node", func(policy infrav1.ControlPlaneRegistrationPolicy) {
 			clusterName := fmt.Sprintf("%s-internal-lb", clusterNamePrefix)
 			By("Creating a cluster with an internal load balancer and an external load balancer")
 			clusterctl.ApplyClusterTemplateAndWait(ctx, clusterctl.ApplyClusterTemplateAndWaitInput{
@@ -416,12 +416,60 @@ var _ = Describe("Workload cluster creation", func() {
 					KubernetesVersion:        e2eConfig.MustGetVariable(KubernetesVersion),
 					ControlPlaneMachineCount: ptr.To[int64](1),
 					WorkerMachineCount:       ptr.To[int64](1),
+					ClusterctlVariables: map[string]string{
+						"GCP_CONTROL_PLANE_REGISTRATION_POLICY": string(policy),
+					},
 				},
 				WaitForClusterIntervals:      e2eConfig.GetIntervals(specName, "wait-cluster"),
 				WaitForControlPlaneIntervals: e2eConfig.GetIntervals(specName, "wait-control-plane"),
 				WaitForMachineDeployments:    e2eConfig.GetIntervals(specName, "wait-worker-nodes"),
 			}, result)
-		})
+
+			managementClient := bootstrapClusterProxy.GetClient()
+			gcpCluster := &infrav1.GCPCluster{}
+			Expect(managementClient.Get(ctx, client.ObjectKey{Namespace: namespace.Name, Name: clusterName}, gcpCluster)).To(Succeed())
+			Expect(gcpCluster.Spec.LoadBalancer.ControlPlaneRegistration).To(HaveValue(Equal(policy)))
+			if policy == infrav1.ControlPlaneRegistrationImmediate {
+				return
+			}
+
+			By("Replacing the initialized control plane through a native KCP rollout")
+			Expect(managementClient.Get(ctx, client.ObjectKeyFromObject(result.ControlPlane), result.ControlPlane)).To(Succeed())
+			patchHelper, err := patch.NewHelper(result.ControlPlane, managementClient)
+			Expect(err).NotTo(HaveOccurred())
+			cutoff := metav1.Now()
+			result.ControlPlane.Spec.Rollout.After = cutoff
+			Expect(patchHelper.Patch(ctx, result.ControlPlane)).To(Succeed())
+
+			// Check Machine creation times before the usual readiness waiter so stale
+			// KCP status from before the rollout cannot satisfy the test.
+			Eventually(func(g Gomega) {
+				machines := &clusterv1.MachineList{}
+				g.Expect(managementClient.List(ctx, machines, client.InNamespace(namespace.Name), client.MatchingLabels{
+					clusterv1.ClusterNameLabel: clusterName, clusterv1.MachineControlPlaneLabel: "",
+				})).To(Succeed())
+				g.Expect(machines.Items).To(HaveLen(1))
+				for _, machine := range machines.Items {
+					g.Expect(machine.CreationTimestamp.Before(&cutoff)).To(BeFalse(), "original Machine %s remains", machine.Name)
+					g.Expect(machine.DeletionTimestamp.IsZero()).To(BeTrue())
+					g.Expect(machine.Status.NodeRef.IsDefined()).To(BeTrue())
+				}
+			}, e2eConfig.GetIntervals(specName, "wait-control-plane")...).Should(Succeed())
+			framework.WaitForControlPlaneAndMachinesReady(ctx, framework.WaitForControlPlaneAndMachinesReadyInput{
+				GetLister: managementClient, Cluster: result.Cluster, ControlPlane: result.ControlPlane,
+			}, e2eConfig.GetIntervals(specName, "wait-control-plane")...)
+
+			By("Reading the workload API after the original backend has been replaced")
+			workloadClient := bootstrapClusterProxy.GetWorkloadCluster(ctx, namespace.Name, clusterName).GetClient()
+			Eventually(func(g Gomega) {
+				nodes := &corev1.NodeList{}
+				g.Expect(workloadClient.List(ctx, nodes)).To(Succeed())
+				g.Expect(nodes.Items).To(HaveLen(2))
+			}, e2eConfig.GetIntervals(specName, "wait-control-plane")...).Should(Succeed())
+		},
+			Entry("with Immediate registration", infrav1.ControlPlaneRegistrationImmediate),
+			Entry("with deferred registration and a control-plane replacement", infrav1.ControlPlaneRegistrationAfterNodeReference),
+		)
 	})
 
 	// Skipping the test case for now. The internal load balancer test case requires the management cluster

@@ -69,6 +69,7 @@ type ClusterGetter interface {
 	AdditionalLabels() infrav1.Labels
 	FailureDomains() []string
 	ControlPlaneEndpoint() clusterv1.APIEndpoint
+	ControlPlaneInitialized() bool
 	ResourceManagerTags() infrav1.ResourceManagerTags
 	LoadBalancer() infrav1.LoadBalancerSpec
 }

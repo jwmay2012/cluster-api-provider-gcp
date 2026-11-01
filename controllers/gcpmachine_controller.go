@@ -288,16 +288,24 @@ func (r *GCPMachineReconciler) reconcile(ctx context.Context, machineScope *scop
 		machineScope.SetReady()
 		v1beta1conditions.MarkTrue(machineScope.ConditionSetter(), infrav1.GCPMachineInstanceReadyCondition)
 		v1beta1conditions.MarkTrue(machineScope.ConditionSetter(), infrav1.GCPMachineReadyCondition)
-		v1beta2conditions.Set(machineScope.V1Beta2ConditionSetter(), metav1.Condition{
+		registrationDeferred := machineScope.IsControlPlane() && !machineScope.CanRegisterControlPlaneInstance()
+		instanceReady := metav1.Condition{
 			Type:   infrav1.GCPMachineInstanceReadyCondition,
 			Status: metav1.ConditionTrue,
 			Reason: infrav1.InstanceReadyReason,
-		})
+		}
+		if registrationDeferred {
+			instanceReady.Message = "Instance is running; API backend registration is waiting for Machine.status.nodeRef"
+		}
+		v1beta2conditions.Set(machineScope.V1Beta2ConditionSetter(), instanceReady)
 		v1beta2conditions.Set(machineScope.V1Beta2ConditionSetter(), metav1.Condition{
 			Type:   infrav1.GCPMachineReadyCondition,
 			Status: metav1.ConditionTrue,
 			Reason: infrav1.InstanceReadyReason,
 		})
+		if registrationDeferred {
+			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		}
 		return ctrl.Result{}, nil
 	default:
 		machineScope.SetFailureReason("UpdateError")

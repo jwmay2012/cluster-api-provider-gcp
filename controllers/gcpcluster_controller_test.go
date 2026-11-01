@@ -21,7 +21,9 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -31,6 +33,20 @@ import (
 var _ = Describe("GCPClusterReconciler", func() {
 	BeforeEach(func() {})
 	AfterEach(func() {})
+
+	It("validates the optional registration policy through the API schema", func() {
+		ctx := context.Background()
+		instance := &infrav1.GCPCluster{ObjectMeta: metav1.ObjectMeta{Name: "registration-policy", Namespace: "default"}}
+		Expect(k8sClient.Create(ctx, instance)).To(Succeed())
+		DeferCleanup(k8sClient.Delete, ctx, instance)
+		Expect(instance.Spec.LoadBalancer.ControlPlaneRegistration).To(BeNil())
+		for _, policy := range []infrav1.ControlPlaneRegistrationPolicy{infrav1.ControlPlaneRegistrationImmediate, infrav1.ControlPlaneRegistrationAfterNodeReference} {
+			instance.Spec.LoadBalancer.ControlPlaneRegistration = ptr.To(policy)
+			Expect(k8sClient.Update(ctx, instance)).To(Succeed())
+		}
+		instance.Spec.LoadBalancer.ControlPlaneRegistration = ptr.To(infrav1.ControlPlaneRegistrationPolicy("Unknown"))
+		Expect(apierrors.IsInvalid(k8sClient.Update(ctx, instance))).To(BeTrue())
+	})
 
 	Context("Reconcile an GCPCluster", func() {
 		It("should not error and not requeue the request with insufficient set up", func() {

@@ -17,14 +17,34 @@ limitations under the License.
 package webhooks
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	firewallutil "sigs.k8s.io/cluster-api-provider-gcp/util/firewall"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 )
+
+func TestGCPClusterRegistrationPolicyIsMutable(t *testing.T) {
+	g := NewWithT(t)
+	old := &infrav1.GCPCluster{Spec: infrav1.GCPClusterSpec{
+		Project: "my-project", Region: "us-central1", Network: infrav1.NetworkSpec{Mtu: 1460},
+		LoadBalancer: infrav1.LoadBalancerSpec{LoadBalancerType: ptr.To(infrav1.Internal)},
+	}}
+	updated := old.DeepCopy()
+	updated.Spec.LoadBalancer.ControlPlaneRegistration = ptr.To(infrav1.ControlPlaneRegistrationAfterNodeReference)
+	validator := &GCPCluster{}
+	_, err := validator.ValidateUpdate(context.Background(), old, updated)
+	g.Expect(err).NotTo(HaveOccurred())
+	_, err = validator.ValidateUpdate(context.Background(), updated, old)
+	g.Expect(err).NotTo(HaveOccurred(), "the policy can be disabled without rebuilding the load balancer")
+	updated.Spec.LoadBalancer.LoadBalancerType = ptr.To(infrav1.External)
+	_, err = validator.ValidateUpdate(context.Background(), old, updated)
+	g.Expect(err).To(HaveOccurred(), "the other load-balancer settings remain immutable")
+}
 
 func TestGCPCluster_ValidateUpdate(t *testing.T) {
 	g := NewWithT(t)

@@ -44,6 +44,7 @@ type instancegroupsInterface interface {
 type Scope interface {
 	cloud.Machine
 	InstanceSpec(ctx context.Context, log logr.Logger) *compute.Instance
+	CanRegisterControlPlaneInstance() bool
 }
 
 // Service implements instances reconciler.

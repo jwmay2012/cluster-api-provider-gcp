@@ -1,0 +1,49 @@
+# Control-plane backend registration
+
+CAPG's default `Immediate` policy adds a running control-plane VM to its API
+instance group. Load-balancer health checks then decide whether to serve traffic
+to it. Existing clusters retain this behavior when the policy is omitted.
+
+Internal passthrough load balancers need additional care during a control-plane
+join: the GCE guest agent installs the load-balancer VIP as a local route on
+registered backends. A joining machine can consequently send its discovery
+requests to itself before its local API server exists. See Google's
+[backend-as-client behavior](https://cloud.google.com/load-balancing/docs/internal/setting-up-internal#test_the_load_balancer).
+
+For control planes that register their Kubernetes Node only after the local API
+server starts, select `AfterNodeReference`:
+
+```yaml
+spec:
+  loadBalancer:
+    loadBalancerType: Internal
+    controlPlaneRegistration: AfterNodeReference
+```
+
+After the cluster control plane initializes, CAPG waits for the corresponding
+Machine's `status.nodeRef` before adding a new backend. The initial control plane
+is still registered immediately so a new cluster can bootstrap. Infrastructure
+readiness and ProviderID are published while registration is deferred, allowing
+CAPI to discover the Node and reconcile its backend membership.
+
+Kubeadm's [local control-plane kubelet mode](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-init/#feature-gates)
+meets this ordering: the kubelet registers through its local API server. Verify
+that your bootstrap provider and Kubernetes version use this mode. Keep
+`Immediate` for control planes that do not register Kubernetes Nodes or whose
+Node registration precedes their local API server. NodeRef is not a universal
+control-plane health signal.
+
+While registration is deferred, the GCPMachine's `InstanceReady` condition in
+`status.v1beta2.conditions` remains true and its message explains that CAPG is
+waiting for `Machine.status.nodeRef`. This allows Node discovery to proceed
+without hiding the pending registration.
+
+The policy is explicit and applies to the shared instance groups for every
+configured load balancer, including `InternalExternal`. Changing it does not
+remove existing members. Other load-balancer settings remain immutable.
+The field has no effect on `GCPManagedCluster`; GKE manages its control plane.
+
+Use the normal GCE guest environment to install the VIP route after registration.
+CAPG does not require a guest routing script, a particular init system, or a
+bootstrap-provider-specific file. Its health checks remain responsible for
+backend health. This policy does not change the machine's IP-forwarding setting.

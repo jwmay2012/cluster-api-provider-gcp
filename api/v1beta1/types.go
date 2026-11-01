@@ -394,6 +394,17 @@ var (
 	InternalExternal = LoadBalancerType("InternalExternal")
 )
 
+// ControlPlaneRegistrationPolicy determines when a control-plane instance enters the API instance group.
+// +kubebuilder:validation:Enum=Immediate;AfterNodeReference
+type ControlPlaneRegistrationPolicy string
+
+const (
+	// ControlPlaneRegistrationImmediate registers instances as soon as they are running.
+	ControlPlaneRegistrationImmediate ControlPlaneRegistrationPolicy = "Immediate"
+	// ControlPlaneRegistrationAfterNodeReference waits for Node registration after cluster initialization.
+	ControlPlaneRegistrationAfterNodeReference ControlPlaneRegistrationPolicy = "AfterNodeReference"
+)
+
 // LoadBalancerSpec contains configuration for one or more LoadBalancers.
 type LoadBalancerSpec struct {
 	// APIServerInstanceGroupTagOverride overrides the default setting for the
@@ -408,6 +419,17 @@ type LoadBalancerSpec struct {
 	// If not set, a Global External Proxy Load Balancer will be created by default.
 	// +optional
 	LoadBalancerType *LoadBalancerType `json:"loadBalancerType,omitempty"`
+
+	// ControlPlaneRegistration determines when new control-plane GCPMachine instances
+	// enter the shared API instance groups. Defaults to Immediate (when the VM is running).
+	// AfterNodeReference waits for Machine.status.nodeRef once the cluster control plane
+	// is initialized; initial bootstrap still registers immediately. Use it only with
+	// control planes that register Nodes after their local API server starts, such as
+	// kubeadm with ControlPlaneKubeletLocalMode enabled. It applies to all configured
+	// load balancers and does not remove existing members when changed. This policy
+	// does not apply to GCPManagedCluster, whose control plane is managed by GKE.
+	// +optional
+	ControlPlaneRegistration *ControlPlaneRegistrationPolicy `json:"controlPlaneRegistration,omitempty"`
 
 	// InternalLoadBalancer is the configuration for an Internal Passthrough Network Load Balancer.
 	// +optional

@@ -148,6 +148,13 @@ func (m *MachineScope) IsControlPlane() bool {
 	return IsControlPlaneMachine(m.Machine)
 }
 
+// CanRegisterControlPlaneInstance applies the cluster's API backend admission policy.
+func (m *MachineScope) CanRegisterControlPlaneInstance() bool {
+	policy := ptr.Deref(m.ClusterGetter.LoadBalancer().ControlPlaneRegistration, infrav1.ControlPlaneRegistrationImmediate)
+	return policy != infrav1.ControlPlaneRegistrationAfterNodeReference ||
+		!m.ClusterGetter.ControlPlaneInitialized() || m.Machine.Status.NodeRef.IsDefined()
+}
+
 // Role returns the machine role from the labels.
 func (m *MachineScope) Role() string {
 	if IsControlPlaneMachine(m.Machine) {

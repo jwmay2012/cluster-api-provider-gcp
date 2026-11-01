@@ -205,6 +205,13 @@ func validateResourcePolicyRegions(policies []string, zone string) error {
 
 func (s *Service) registerControlPlaneInstance(ctx context.Context, instance *compute.Instance) error {
 	log := log.FromContext(ctx)
+	// Internal passthrough membership makes the guest own the API VIP locally.
+	// The optional NodeRef policy lets a joining node reach the existing API
+	// before claiming that VIP. Initial cluster bootstrap still registers immediately.
+	if !s.scope.CanRegisterControlPlaneInstance() {
+		log.V(2).Info("Waiting for the control-plane Node before registering the API backend", "name", instance.Name)
+		return nil
+	}
 	instancegroupName := s.scope.ControlPlaneGroupName()
 	log.V(2).Info("Ensuring instance already registered in the instancegroup", "name", instance.Name, "instancegroup", instancegroupName)
 	instancegroupKey := meta.ZonalKey(instancegroupName, s.scope.Zone())
