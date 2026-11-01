@@ -179,6 +179,11 @@ func (s *ClusterScope) LoadBalancer() infrav1.LoadBalancerSpec {
 	return s.GCPCluster.Spec.LoadBalancer
 }
 
+// ControlPlaneInitialized reports whether the cluster has a functional API server.
+func (s *ClusterScope) ControlPlaneInitialized() bool {
+	return ptr.Deref(s.Cluster.Status.Initialization.ControlPlaneInitialized, false)
+}
+
 // ResourceManagerTags returns ResourceManagerTags from the scope's GCPCluster. The returned value will never be nil.
 func (s *ClusterScope) ResourceManagerTags() infrav1.ResourceManagerTags {
 	if len(s.GCPCluster.Spec.ResourceManagerTags) == 0 {

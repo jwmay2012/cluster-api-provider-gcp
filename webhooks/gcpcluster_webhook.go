@@ -84,7 +84,10 @@ func (*GCPCluster) ValidateUpdate(_ context.Context, old, c *infrav1.GCPCluster)
 		)
 	}
 
-	if !reflect.DeepEqual(c.Spec.LoadBalancer, old.Spec.LoadBalancer) {
+	// Admission policy may change without recreating any load-balancer resources.
+	newLoadBalancer, oldLoadBalancer := c.Spec.LoadBalancer.DeepCopy(), old.Spec.LoadBalancer.DeepCopy()
+	newLoadBalancer.ControlPlaneRegistration, oldLoadBalancer.ControlPlaneRegistration = nil, nil
+	if !reflect.DeepEqual(newLoadBalancer, oldLoadBalancer) {
 		allErrs = append(allErrs,
 			field.Invalid(field.NewPath("spec", "LoadBalancer"),
 				c.Spec.LoadBalancer, "field is immutable"),
